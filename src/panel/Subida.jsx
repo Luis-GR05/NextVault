@@ -7,7 +7,7 @@ import { LIMITE_ARCHIVO } from '../lib/boveda';
 const FASES = { leyendo: 'Leyendo el archivo', comprimiendo: 'Comprimiendo', cifrando: 'Cifrando con AES-256-GCM', fragmentando: 'Fragmentando', repartiendo: 'Repartiendo entre nodos', listo: 'Guardado' };
 
 /** Zona de subida: cifra, fragmenta y reparte cada archivo de verdad, mostrando la etapa en curso. */
-export default function SimuladorFragmentacion() {
+export default function Subida() {
   const { cuenta, subirArchivo, avisar } = useSeguridad();
   const [encima, establecerEncima] = useState(false);
   const [cola, establecerCola] = useState(null); // { nombre, fase, progreso, detalle, indice, total }
@@ -38,24 +38,24 @@ export default function SimuladorFragmentacion() {
       onDragOver={(e) => { e.preventDefault(); establecerEncima(true); }}
       onDragLeave={() => establecerEncima(false)}
       onDrop={(e) => { e.preventDefault(); establecerEncima(false); procesar(e.dataTransfer.files); }}
-      className={`rounded-3xl border-2 border-dashed transition-colors duration-200 p-6 md:p-8 ${encima ? 'border-neon-cyan bg-neon-cyan/8' : 'border-white/12 bg-black/20'}`}>
+      className={`rounded-md border-2 border-dashed transition-colors duration-200 p-6 md:p-8 ${encima ? 'border-laton bg-laton/8' : 'border-white/12 bg-black/20'}`}>
       {cola ? (
         <div aria-live="polite">
-          <div className="flex items-center gap-3 text-white font-semibold">
-            <LoaderCircle size={18} className="gira text-neon-cyan flex-none" />
+          <div className="flex items-center gap-3 text-hueso font-semibold">
+            <LoaderCircle size={18} className="gira text-laton flex-none" />
             <span className="truncate">{cola.nombre}</span>
             {cola.total > 1 && <span className="mono text-xs text-slate-400 flex-none">{cola.indice}/{cola.total}</span>}
           </div>
-          <div className="mt-4 h-2 rounded-full bg-white/8 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-pink transition-[width] duration-300" style={{ width: `${Math.round(cola.progreso * 100)}%` }} />
+          <div className="mt-4 h-2 rounded-sm bg-white/8 overflow-hidden">
+            <div className="h-full rounded-sm bg-laton transition-[width] duration-300" style={{ width: `${Math.round(cola.progreso * 100)}%` }} />
           </div>
           <p className="mt-3 text-sm text-slate-400">{FASES[cola.fase]}{cola.detalle ? ` ${cola.detalle}` : ''}…</p>
         </div>
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <span className="w-14 h-14 rounded-2xl bg-neon-cyan/10 border border-neon-cyan/25 grid place-items-center text-neon-cyan flex-none"><UploadCloud size={26} /></span>
+          <span className="w-14 h-14 rounded-md bg-laton/10 border border-laton/25 grid place-items-center text-laton flex-none"><UploadCloud size={26} /></span>
           <div className="flex-1">
-            <p className="text-white font-semibold">Suelta archivos aquí para cifrarlos</p>
+            <p className="text-hueso font-semibold">Suelta archivos aquí para cifrarlos</p>
             <p className="text-sm text-slate-400 mt-1">
               Perfil {perfil.nombre}: {perfil.fragmentos} fragmentos, {cuenta.copias} {cuenta.copias === 1 ? 'copia' : 'copias'} de cada uno en {cuenta.nodos} nodos. Hasta {LIMITE_ARCHIVO / 1024 / 1024} MB por archivo.
             </p>

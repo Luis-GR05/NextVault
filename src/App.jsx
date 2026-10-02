@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useSeguridad } from './contexto/ContextoSeguridad';
-import FondoRed from './componentes/FondoRed';
-import Navegacion from './componentes/Navegacion';
-import PiePagina from './componentes/PiePagina';
-import Hero from './componentes/Hero';
-import ComoFunciona from './componentes/ComoFunciona';
-import BovedasCatalogo from './componentes/BovedasCatalogo';
-import GeneradorEntropia from './componentes/GeneradorEntropia';
-import ConfiguradorPlan from './componentes/ConfiguradorPlan';
-import AccesoSeguro from './componentes/AccesoSeguro';
-import PanelPrincipal from './componentes/PanelPrincipal';
+import { usePantallas } from './hooks/usePantallas';
+import Cabecera from './ui/Cabecera';
+import Dial from './ui/Dial';
+import Portada from './vistas/Portada';
+import Bovedas from './vistas/Bovedas';
+import MonitorRed from './vistas/MonitorRed';
+import Entropia from './vistas/Entropia';
+import Configurador from './vistas/Configurador';
+import Acceso from './vistas/Acceso';
+import Panel from './panel/Panel';
 
+const SECCIONES = ['Inicio', 'Bóvedas', 'Monitor de red', 'Generador de entropía', 'Configurar plan'];
 const enPanelSegunHash = () => window.location.hash.startsWith('#/panel');
 
 export default function App() {
@@ -26,59 +27,57 @@ export default function App() {
   }, []);
 
   const irAlPanel = useCallback(() => { establecerEnPanel(true); window.location.hash = '#/panel'; window.scrollTo(0, 0); }, []);
-  const irAInicio = useCallback((ancla = '') => {
-    establecerEnPanel(false);
-    window.location.hash = ancla ? `#${ancla}` : '';
-    if (!ancla) window.scrollTo({ top: 0 });
-  }, []);
+  const irAInicio = useCallback(() => { establecerEnPanel(false); window.location.hash = ''; }, []);
   const abrirAcceso = useCallback((modo = 'entrar', config = null) => establecerAcceso({ modo, config }), []);
 
-  // El panel solo existe con la bóveda abierta. Si está bloqueada o no hay sesión, se pide acceso.
+  // El panel solo existe con la bóveda abierta; si no lo está, se pide la contraseña.
   const mostrarPanel = enPanel && abierta;
   const accesoVisible = acceso ?? (enPanel && !abierta && !iniciando ? { modo: cuenta ? 'desbloquear' : 'entrar', config: null } : null);
+  const { indice, ir, contenedor } = usePantallas(SECCIONES.length, !mostrarPanel && !accesoVisible);
+
+  const clase = (i) => `pantalla ${i === indice ? 'activa' : i < indice ? 'antes' : ''}`;
+  const vistas = [
+    <Portada key="p" ir={ir} abrirAcceso={abrirAcceso} irAlPanel={irAlPanel} />, <Bovedas key="b" />, <MonitorRed key="m" />,
+    <Entropia key="e" />, <Configurador key="c" abrirAcceso={abrirAcceso} irAlPanel={irAlPanel} />,
+  ];
 
   return (
-    <div className="relative min-h-screen flex flex-col">
+    <div className="relative min-h-screen">
       <a href="#contenido-principal" className="skip-link">Saltar al contenido</a>
-      <FondoRed />
-      <Navegacion enPanel={mostrarPanel} irAlPanel={irAlPanel} irAInicio={irAInicio} abrirAcceso={abrirAcceso} />
+      <Cabecera secciones={SECCIONES} indice={indice} ir={ir} enPanel={mostrarPanel} irAlPanel={irAlPanel} irAInicio={irAInicio} abrirAcceso={abrirAcceso} />
 
-      <main id="contenido-principal" className="relative z-10 flex-grow">
-        {mostrarPanel ? (
-          <PanelPrincipal />
-        ) : (
-          <>
-            <Hero abrirAcceso={abrirAcceso} irAlPanel={irAlPanel} />
-            <ComoFunciona />
-            <BovedasCatalogo />
-            <GeneradorEntropia />
-            <ConfiguradorPlan abrirAcceso={abrirAcceso} />
-          </>
+      <main id="contenido-principal">
+        {mostrarPanel ? <Panel /> : (
+          <div className="pantallas" ref={contenedor}>
+            <Dial indice={indice} />
+            {vistas.map((v, i) => (
+              <section key={SECCIONES[i]} className={clase(i)} aria-label={SECCIONES[i]} aria-hidden={i !== indice} inert={i !== indice}>{v}</section>
+            ))}
+            <nav className="fixed inset-x-0 bottom-0 z-20 h-12 px-[clamp(20px,5vw,88px)] flex items-center gap-4 bg-carbon/90 backdrop-blur-sm border-t border-[var(--linea)]" aria-label="Pantallas">
+              <div className="flex gap-1.5">
+                {SECCIONES.map((s, i) => (
+                  <button key={s} onClick={() => ir(i)} aria-label={`Ir a ${s}`} aria-current={i === indice ? 'true' : undefined}
+                    className={`h-1 transition-all duration-500 ${i === indice ? 'w-10 bg-laton' : 'w-5 bg-[var(--linea-fuerte)] hover:bg-hueso'}`} />
+                ))}
+              </div>
+              <span className="dato">{String(indice + 1).padStart(2, '0')}/{String(SECCIONES.length).padStart(2, '0')} · {SECCIONES[indice]}</span>
+              <span className="dato ml-auto max-sm:hidden">Rueda, flechas o desliza para cambiar de pantalla</span>
+            </nav>
+          </div>
         )}
       </main>
 
-      {!mostrarPanel && <PiePagina />}
-
       <AnimatePresence>
         {accesoVisible && (
-          <AccesoSeguro
-            key={`acceso-${accesoVisible.modo}`}
-            modoInicial={accesoVisible.modo}
-            config={accesoVisible.config}
+          <Acceso key={`acceso-${accesoVisible.modo}`} modoInicial={accesoVisible.modo} config={accesoVisible.config}
             alCerrar={() => { establecerAcceso(null); if (enPanel && !abierta) irAInicio(); }}
-            alEntrar={() => { establecerAcceso(null); irAlPanel(); }}
-          />
+            alEntrar={() => { establecerAcceso(null); irAlPanel(); }} />
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-max max-w-[calc(100%-2rem)]" aria-live="polite">
+      <div className="fixed bottom-16 right-6 z-[70] flex flex-col items-end gap-2 pointer-events-none max-w-[calc(100%-3rem)] max-md:bottom-16" aria-live="polite">
         {avisos.map((a) => (
-          <div key={a.id} className={`entra px-5 py-3 rounded-full text-sm font-semibold backdrop-blur-xl border shadow-2xl ${
-            a.tipo === 'error' ? 'bg-neon-pink/15 border-neon-pink/40 text-pink-200'
-              : a.tipo === 'info' ? 'bg-neon-violet/15 border-neon-violet/40 text-violet-100'
-              : 'bg-neon-green/10 border-neon-green/40 text-emerald-100'}`}>
-            {a.texto}
-          </div>
+          <div key={a.id} className={`entra placa px-4 py-3 text-sm border-l-2 ${a.tipo === 'error' ? 'border-l-alerta' : a.tipo === 'info' ? 'border-l-aviso' : 'border-l-ok'}`}>{a.texto}</div>
         ))}
       </div>
     </div>

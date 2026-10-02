@@ -7,14 +7,14 @@ import { PERFILES } from '../lib/perfiles';
 
 function Bloque({ titulo, nota, children }) {
   return (
-    <section className="vidrio p-6 md:p-8 grid lg:grid-cols-[0.8fr_1.2fr] gap-6 lg:gap-12">
-      <div><h2 className="font-heading text-white text-xl font-bold">{titulo}</h2><p className="text-sm text-slate-400 mt-2">{nota}</p></div>
+    <section className="placa p-6 md:p-8 grid lg:grid-cols-[0.8fr_1.2fr] gap-6 lg:gap-12">
+      <div><h2 className="font-heading text-hueso text-xl font-medium">{titulo}</h2><p className="text-sm text-slate-400 mt-2">{nota}</p></div>
       <div className="min-w-0">{children}</div>
     </section>
   );
 }
 
-export default function AjustesSeguridad() {
+export default function Seguridad() {
   const { cuenta, cambiarContrasena, crearClaveRecuperacion, cambiarPerfil, guardarCuenta, eliminarCuenta, avisar } = useSeguridad();
   const [c, establecerC] = useState({ actual: '', nueva: '', repetir: '' });
   const [errorC, establecerErrorC] = useState('');
@@ -65,7 +65,7 @@ export default function AjustesSeguridad() {
       <Bloque titulo="Clave de recuperación" nota="Es la única forma de volver a entrar si olvidas la contraseña maestra. Se muestra una sola vez.">
         {claveRec ? (
           <div className="entra">
-            <p className="mono text-lg md:text-xl text-neon-cyan bg-black/50 border border-neon-cyan/30 rounded-2xl p-5 break-all select-all tracking-wider">{claveRec}</p>
+            <p className="mono text-lg md:text-xl text-laton bg-black/50 border border-laton/30 rounded-md p-5 break-all select-all tracking-wider">{claveRec}</p>
             <div className="flex flex-wrap gap-3 mt-4">
               <button className="boton boton-sec boton-mini" onClick={async () => { try { await navigator.clipboard.writeText(claveRec); avisar('Clave copiada'); } catch { avisar('No se pudo copiar', 'error'); } }}><Copy size={14} /> Copiar</button>
               <button className="boton boton-sec boton-mini" onClick={descargarRecuperacion}><Download size={14} /> Descargar .txt</button>
@@ -100,7 +100,7 @@ export default function AjustesSeguridad() {
             <select id="aj-perfil" className="campo" value={perfil} onChange={(e) => { establecerPerfil(e.target.value); establecerCopias(Math.min(PERFILES[e.target.value].copias, cuenta.nodos)); }}>
               {Object.values(PERFILES).map((p) => <option key={p.clave} value={p.clave}>{p.nombre}: {p.fragmentos} fragmentos, PBKDF2 {p.iteraciones / 1000}k{p.comprimir ? ', gzip' : ''}</option>)}
             </select></div>
-          <div><div className="flex justify-between mb-3"><label className="etiqueta !mb-0" htmlFor="aj-copias">Copias de cada fragmento</label><span className="mono font-bold text-white">{copias}</span></div>
+          <div><div className="flex justify-between mb-3"><label className="etiqueta !mb-0" htmlFor="aj-copias">Copias de cada fragmento</label><span className="mono font-medium text-hueso">{copias}</span></div>
             <input id="aj-copias" type="range" min="1" max={Math.min(3, cuenta.nodos)} value={copias} onChange={(e) => establecerCopias(Number(e.target.value))} className="rango" /></div>
           {cambiado && (<>
             <div><label className="etiqueta" htmlFor="aj-clave-perfil">Contraseña maestra</label><input id="aj-clave-perfil" type="password" autoComplete="current-password" className="campo" value={clavePerfil} onChange={(e) => establecerClavePerfil(e.target.value)} /></div>
@@ -121,8 +121,8 @@ export default function AjustesSeguridad() {
       <Bloque titulo="Almacenamiento" nota="Lo que el navegador concede a este sitio. Marcar el almacenamiento como persistente evita que el navegador lo borre si falta espacio.">
         {espacio?.cuota ? (
           <div className="max-w-md">
-            <p className="text-sm text-slate-300"><strong className="text-white">{tamano(espacio.usado)}</strong> usados de {tamano(espacio.cuota)}</p>
-            <div className="mt-3 h-2 rounded-full bg-white/8 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-neon-violet" style={{ width: `${Math.max(1, (espacio.usado / espacio.cuota) * 100)}%` }} /></div>
+            <p className="text-sm text-slate-300"><strong className="text-hueso">{tamano(espacio.usado)}</strong> usados de {tamano(espacio.cuota)}</p>
+            <div className="mt-3 h-2 rounded-sm bg-white/8 overflow-hidden"><div className="h-full rounded-sm bg-laton" style={{ width: `${Math.max(1, (espacio.usado / espacio.cuota) * 100)}%` }} /></div>
             <button className="boton boton-sec boton-mini mt-4" onClick={async () => { const ok = await navigator.storage?.persist?.(); avisar(ok ? 'Almacenamiento marcado como persistente' : 'El navegador no ha concedido la persistencia', ok ? 'ok' : 'info'); }}>Pedir almacenamiento persistente</button>
           </div>
         ) : <p className="text-sm text-slate-400">Este navegador no informa del espacio disponible.</p>}

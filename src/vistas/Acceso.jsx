@@ -12,7 +12,7 @@ const TITULOS = {
   recuperar: ['Recupera el acceso', 'Usa tu clave de recuperación para fijar una contraseña nueva.'],
 };
 
-export default function AccesoSeguro({ modoInicial = 'entrar', config, alCerrar, alEntrar }) {
+export default function Acceso({ modoInicial = 'entrar', config, alCerrar, alEntrar }) {
   const { cuenta, registrar, entrar, entrarConRecuperacion, cerrarSesion } = useSeguridad();
   const [modo, establecerModo] = useState(modoInicial);
   const [correo, establecerCorreo] = useState(cuenta?.correo ?? '');
@@ -65,27 +65,27 @@ export default function AccesoSeguro({ modoInicial = 'entrar', config, alCerrar,
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-obsidian/85 backdrop-blur-md p-4 overflow-y-auto"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-carbon/85 backdrop-blur-md p-4 overflow-y-auto"
       onMouseDown={(e) => { if (e.target === e.currentTarget) alCerrar(); }}>
       <motion.div ref={caja} role="dialog" aria-modal="true" aria-labelledby="acceso-titulo"
         initial={{ opacity: 0, scale: 0.96, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 18 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="vidrio w-full max-w-md p-7 md:p-10 relative my-auto shadow-[0_40px_120px_rgba(0,0,0,0.8)]">
+        className="placa w-full max-w-md p-7 md:p-10 relative my-auto ">
         <button onClick={alCerrar} className="icono-btn absolute top-4 right-4" aria-label="Cerrar"><X size={20} /></button>
 
-        <span className="w-12 h-12 rounded-2xl bg-neon-violet/12 border border-neon-violet/30 grid place-items-center text-neon-cyan"><ShieldCheck size={24} /></span>
-        <h2 id="acceso-titulo" className="font-heading text-white text-3xl font-extrabold tracking-tight mt-5">{titulo}</h2>
+        <span className="w-12 h-12 rounded-md bg-laton/12 border border-laton/30 grid place-items-center text-laton"><ShieldCheck size={24} /></span>
+        <h2 id="acceso-titulo" className="font-heading text-hueso text-3xl font-medium tracking-tight mt-5">{titulo}</h2>
         <p className="text-sm text-slate-400 mt-2">{nota}</p>
 
         {modo === 'registro' && (
-          <p className="mt-4 text-xs text-slate-300 bg-white/5 border border-white/8 rounded-xl px-4 py-3">
-            Perfil <strong className="text-white">{PERFILES[cfg.perfil].nombre}</strong>: {cfg.nodos} nodos, {cfg.copias} {cfg.copias === 1 ? 'copia' : 'copias'} de cada fragmento.
+          <p className="mt-4 text-xs text-slate-300 bg-white/5 border border-white/8 rounded px-4 py-3">
+            Bóveda <strong className="text-hueso">{PERFILES[cfg.perfil].nombre}</strong>: {cfg.nodos} nodos, {cfg.copias} {cfg.copias === 1 ? 'copia' : 'copias'} de cada fragmento.
           </p>
         )}
 
         <form onSubmit={enviar} className="flex flex-col gap-4 mt-6" noValidate>
           {modo === 'desbloquear' ? (
-            <p className="mono text-sm text-neon-cyan bg-black/40 border border-white/8 rounded-xl px-4 py-3 truncate">{cuenta?.correo}</p>
+            <p className="mono text-sm text-laton bg-black/40 border border-white/8 rounded px-4 py-3 truncate">{cuenta?.correo}</p>
           ) : (
             <div><label htmlFor="acc-correo" className="etiqueta">Correo</label>
               <input id="acc-correo" type="email" autoComplete="username" className="campo" value={correo} onChange={(e) => establecerCorreo(e.target.value)} placeholder="tu@correo.com" /></div>
@@ -104,7 +104,7 @@ export default function AccesoSeguro({ modoInicial = 'entrar', config, alCerrar,
             </div>
             {crea && contrasena && (
               <div className="mt-2.5 flex items-center gap-3">
-                <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className={`h-full rounded-full transition-all duration-300 ${nivel.color}`} style={{ width: `${Math.min(100, bits / 1.2)}%` }} /></div>
+                <div className="flex-1 h-1.5 rounded-sm bg-white/10 overflow-hidden"><div className={`h-full rounded-sm transition-all duration-300 ${nivel.color}`} style={{ width: `${Math.min(100, bits / 1.2)}%` }} /></div>
                 <span className="text-xs font-semibold text-slate-300">{nivel.texto}</span>
               </div>
             )}
@@ -123,10 +123,10 @@ export default function AccesoSeguro({ modoInicial = 'entrar', config, alCerrar,
         </form>
 
         <div className="mt-6 flex flex-col gap-2 text-sm text-slate-400">
-          {modo === 'entrar' && <p>¿Primera vez? <button onClick={() => cambiar('registro')} className="text-neon-cyan font-semibold hover:underline">Crea una bóveda</button></p>}
-          {modo === 'registro' && <p>¿Ya tienes una? <button onClick={() => cambiar('entrar')} className="text-neon-cyan font-semibold hover:underline">Entra</button></p>}
+          {modo === 'entrar' && <p>¿Primera vez? <button onClick={() => cambiar('registro')} className="text-laton font-semibold hover:underline">Crea una bóveda</button></p>}
+          {modo === 'registro' && <p>¿Ya tienes una? <button onClick={() => cambiar('entrar')} className="text-laton font-semibold hover:underline">Entra</button></p>}
           {(modo === 'entrar' || modo === 'desbloquear') && <p><button onClick={() => cambiar('recuperar')} className="text-slate-300 font-semibold hover:underline">He olvidado mi contraseña</button></p>}
-          {modo === 'recuperar' && <p><button onClick={() => cambiar(cuenta ? 'desbloquear' : 'entrar')} className="text-neon-cyan font-semibold hover:underline">Volver</button></p>}
+          {modo === 'recuperar' && <p><button onClick={() => cambiar(cuenta ? 'desbloquear' : 'entrar')} className="text-laton font-semibold hover:underline">Volver</button></p>}
           {modo === 'desbloquear' && <p><button onClick={() => { cerrarSesion(); cambiar('entrar'); establecerCorreo(''); }} className="text-slate-300 font-semibold hover:underline">Usar otra bóveda</button></p>}
         </div>
       </motion.div>

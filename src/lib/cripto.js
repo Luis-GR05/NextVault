@@ -136,3 +136,26 @@ export const tamano = (bytes) => {
   while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
   return `${v.toLocaleString('es-ES', { maximumFractionDigits: v < 10 ? 1 : 0 })} ${u[i]}`;
 };
+
+/**
+ * Contraseña a partir de entropía recogida del puntero, mezclada con el generador del sistema.
+ * La mezcla (SHA-256 en cadena) nunca es más débil que el generador del sistema por sí solo.
+ */
+export async function contrasenaDesdeEntropia(muestras, longitud, opciones) {
+  const activos = Object.keys(JUEGOS).filter((k) => opciones[k]);
+  const alfabeto = activos.map((k) => JUEGOS[k]).join('');
+  if (!alfabeto) return '';
+  const semilla = new Uint8Array([...te.encode(muestras.join(',')), ...aleatorio(32)]);
+  let bloque = new Uint8Array(await crypto.subtle.digest('SHA-256', semilla));
+  const limite = Math.floor(256 / alfabeto.length) * alfabeto.length;
+  let salida = '', i = 0, contador = 0;
+  while (salida.length < longitud) {
+    if (i >= bloque.length) {
+      bloque = new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array([...bloque, contador++ & 255, ...aleatorio(8)])));
+      i = 0;
+    }
+    const b = bloque[i++];
+    if (b < limite) salida += alfabeto[b % alfabeto.length];
+  }
+  return salida;
+}

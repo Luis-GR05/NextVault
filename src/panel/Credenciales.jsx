@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus, Search, Eye, EyeOff, Copy, Pencil, Trash2, ExternalLink, Wand2 } from 'lucide-react';
 import { useSeguridad } from '../contexto/ContextoSeguridad';
 import { entropiaDeTexto, nivelDeBits } from '../lib/cripto';
-import { Generador } from './GeneradorEntropia';
+import { Generador } from '../ui/Generador';
 
 const VACIO = { titulo: '', usuario: '', clave: '', url: '', notas: '' };
 
@@ -21,8 +21,8 @@ function Formulario({ inicial, alGuardar, alCancelar }) {
   };
 
   return (
-    <form onSubmit={enviar} className="vidrio p-6 md:p-8 grid gap-4 entra" noValidate>
-      <h3 className="font-heading text-white text-xl font-bold">{inicial.id ? 'Editar credencial' : 'Nueva credencial'}</h3>
+    <form onSubmit={enviar} className="placa p-6 md:p-8 grid gap-4 entra" noValidate>
+      <h3 className="font-heading text-hueso text-xl font-medium">{inicial.id ? 'Editar credencial' : 'Nueva credencial'}</h3>
       <div className="grid sm:grid-cols-2 gap-4">
         <div><label className="etiqueta" htmlFor="cr-titulo">Nombre</label><input id="cr-titulo" className="campo" placeholder="Banco, correo, wifi…" autoFocus {...campo('titulo')} /></div>
         <div><label className="etiqueta" htmlFor="cr-usuario">Usuario</label><input id="cr-usuario" className="campo" autoComplete="off" {...campo('usuario')} /></div>
@@ -34,7 +34,7 @@ function Formulario({ inicial, alGuardar, alCancelar }) {
           <button type="button" className="icono-btn border border-white/10 !w-12 !h-auto" onClick={() => establecerVer(!ver)} aria-label={ver ? 'Ocultar' : 'Mostrar'}>{ver ? <EyeOff size={17} /> : <Eye size={17} />}</button>
           <button type="button" className="icono-btn border border-white/10 !w-12 !h-auto" onClick={() => establecerGenerador(!generador)} aria-label="Generar contraseña" aria-expanded={generador}><Wand2 size={17} /></button>
         </div>
-        {generador && <div className="mt-3 p-4 rounded-2xl bg-black/30 border border-white/8"><Generador compacto alUsar={(v) => { establecerD({ ...d, clave: v }); establecerVer(true); establecerGenerador(false); }} /></div>}
+        {generador && <div className="mt-3 p-4 rounded-md bg-black/30 border border-white/8"><Generador compacto alUsar={(v) => { establecerD({ ...d, clave: v }); establecerVer(true); establecerGenerador(false); }} /></div>}
       </div>
       <div><label className="etiqueta" htmlFor="cr-url">Dirección web</label><input id="cr-url" className="campo" placeholder="https://" {...campo('url')} /></div>
       <div><label className="etiqueta" htmlFor="cr-notas">Notas</label><textarea id="cr-notas" rows={2} className="campo resize-y" {...campo('notas')} /></div>
@@ -88,7 +88,7 @@ export default function Credenciales() {
       {edicion && <Formulario key={edicion.id ?? 'nueva'} inicial={edicion} alCancelar={() => establecerEdicion(null)}
         alGuardar={async (d) => { await guardarSecreto(d); establecerEdicion(null); avisar('Credencial cifrada y guardada'); }} />}
 
-      <div className="vidrio p-5 md:p-8">
+      <div className="placa p-5 md:p-8">
         {secretos.length === 0 ? (
           <p className="text-slate-400 py-10 text-center">Guarda aquí tus contraseñas: se cifran con la misma clave que tus archivos y solo se ven con la bóveda abierta.</p>
         ) : lista.length === 0 ? (
@@ -100,10 +100,10 @@ export default function Credenciales() {
               return (
                 <li key={s.id} className="py-4">
                   <div className="flex items-center gap-3 md:gap-4">
-                    <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-neon-violet/30 to-neon-pink/20 border border-white/10 grid place-items-center font-heading font-extrabold text-white flex-none">{s.titulo[0]?.toUpperCase()}</span>
+                    <span className="w-11 h-11 rounded bg-chapa border border-white/10 grid place-items-center font-heading font-medium text-laton flex-none">{s.titulo[0]?.toUpperCase()}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-white font-semibold truncate flex items-center gap-2">{s.titulo}
-                        {/^https?:\/\//.test(s.url) && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-neon-cyan" aria-label={`Abrir ${s.titulo}`}><ExternalLink size={14} /></a>}</p>
+                      <p className="text-hueso font-semibold truncate flex items-center gap-2">{s.titulo}
+                        {/^https?:\/\//.test(s.url) && <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-laton" aria-label={`Abrir ${s.titulo}`}><ExternalLink size={14} /></a>}</p>
                       <p className="text-xs text-slate-400 truncate">{s.usuario || 'Sin usuario'}</p>
                       <p className="mono text-sm mt-1 text-slate-200 break-all">{visible === s.id ? s.clave : '•'.repeat(Math.min(14, s.clave.length))}</p>
                     </div>
@@ -111,11 +111,11 @@ export default function Credenciales() {
                     <button className="icono-btn" onClick={() => establecerVisible(visible === s.id ? null : s.id)} aria-label={visible === s.id ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{visible === s.id ? <EyeOff size={17} /> : <Eye size={17} />}</button>
                     <button className="icono-btn" onClick={() => copiar(s.clave, 'Contraseña')} aria-label={`Copiar contraseña de ${s.titulo}`}><Copy size={17} /></button>
                     <button className="icono-btn hidden sm:inline-grid" onClick={() => { establecerEdicion(s); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Editar ${s.titulo}`}><Pencil size={17} /></button>
-                    <button className="icono-btn hover:!text-neon-pink" onClick={() => establecerPorBorrar(porBorrar === s.id ? null : s.id)} aria-label={`Eliminar ${s.titulo}`}><Trash2 size={17} /></button>
+                    <button className="icono-btn hover:!text-alerta" onClick={() => establecerPorBorrar(porBorrar === s.id ? null : s.id)} aria-label={`Eliminar ${s.titulo}`}><Trash2 size={17} /></button>
                   </div>
                   {s.notas && visible === s.id && <p className="text-sm text-slate-400 mt-2 md:ml-[60px] whitespace-pre-wrap">{s.notas}</p>}
                   {porBorrar === s.id && (
-                    <div className="mt-3 md:ml-[60px] flex flex-wrap items-center gap-3 text-sm bg-neon-pink/8 border border-neon-pink/25 rounded-xl px-4 py-3">
+                    <div className="mt-3 md:ml-[60px] flex flex-wrap items-center gap-3 text-sm bg-alerta/8 border border-alerta/25 rounded px-4 py-3">
                       <span className="text-slate-200 flex-1">¿Eliminar «{s.titulo}»? No se puede deshacer.</span>
                       <button className="boton boton-peligro boton-mini" onClick={async () => { await eliminarSecreto(s.id); establecerPorBorrar(null); avisar('Credencial eliminada'); }}>Eliminar</button>
                       <button className="boton boton-sec boton-mini" onClick={() => establecerPorBorrar(null)}>Conservar</button>

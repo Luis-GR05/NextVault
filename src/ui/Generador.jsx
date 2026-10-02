@@ -24,21 +24,21 @@ export function Generador({ alUsar, compacto = false }) {
   };
 
   return (
-    <div className={compacto ? 'flex flex-col gap-4' : 'vidrio p-6 md:p-9 flex flex-col gap-6'}>
+    <div className={compacto ? 'flex flex-col gap-4' : 'placa p-6 md:p-9 flex flex-col gap-6'}>
       <div className="flex items-stretch gap-2">
-        <output className={`mono flex-1 min-w-0 bg-black/50 border border-white/10 rounded-2xl px-4 ${compacto ? 'py-3 text-sm' : 'py-5 text-[clamp(1rem,2.4vw,1.5rem)]'} text-neon-cyan break-all select-all`} aria-label="Contraseña generada">
+        <output className={`mono flex-1 min-w-0 bg-black/50 border border-white/10 rounded-md px-4 ${compacto ? 'py-3 text-sm' : 'py-5 text-[clamp(1rem,2.4vw,1.5rem)]'} text-laton break-all select-all`} aria-label="Contraseña generada">
           {valor || '—'}
         </output>
         <div className="flex flex-col gap-2">
           <button type="button" onClick={generar} className="icono-btn border border-white/10 flex-1" aria-label="Generar otra"><RefreshCw size={16} /></button>
-          <button type="button" onClick={copiar} className="icono-btn border border-white/10 flex-1" aria-label="Copiar">{copiado ? <Check size={16} className="text-neon-green" /> : <Copy size={16} />}</button>
+          <button type="button" onClick={copiar} className="icono-btn border border-white/10 flex-1" aria-label="Copiar">{copiado ? <Check size={16} className="text-ok" /> : <Copy size={16} />}</button>
         </div>
       </div>
 
       <div>
         <div className="flex justify-between items-center mb-3">
           <label htmlFor={compacto ? 'gen-long-c' : 'gen-long'} className="etiqueta !mb-0">Longitud</label>
-          <span className="mono text-sm text-white font-bold">{longitud} caracteres</span>
+          <span className="mono text-sm text-hueso font-medium">{longitud} caracteres</span>
         </div>
         <input id={compacto ? 'gen-long-c' : 'gen-long'} type="range" min="8" max="64" value={longitud} onChange={(e) => establecerLongitud(Number(e.target.value))} className="rango" />
       </div>
@@ -47,7 +47,7 @@ export function Generador({ alUsar, compacto = false }) {
         {JUEGOS.map(([k, muestra]) => (
           <button key={k} type="button" aria-pressed={op[k]} disabled={op[k] && activos === 1}
             onClick={() => establecerOp((o) => ({ ...o, [k]: !o[k] }))}
-            className={`mono px-4 py-2 rounded-full text-sm font-bold border transition-colors ${op[k] ? 'bg-neon-violet/20 border-neon-violet/60 text-white' : 'border-white/12 text-slate-500'}`}>
+            className={`mono px-4 py-2 rounded-sm text-sm font-medium border transition-colors ${op[k] ? 'bg-laton/20 border-laton/60 text-hueso' : 'border-white/12 text-slate-500'}`}>
             {muestra}
           </button>
         ))}
@@ -56,7 +56,7 @@ export function Generador({ alUsar, compacto = false }) {
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/8">
         <div className="flex items-center gap-3">
           <span className={`chip ${nivel.clase}`}>{nivel.texto}</span>
-          <span className="text-sm text-slate-400"><strong className="text-white mono">{bits}</strong> bits de entropía</span>
+          <span className="text-sm text-slate-400"><strong className="text-hueso mono">{bits}</strong> bits de entropía</span>
         </div>
         {alUsar
           ? <button type="button" onClick={() => alUsar(valor)} className="boton boton-pri boton-mini">Usar esta</button>
@@ -66,18 +66,3 @@ export function Generador({ alUsar, compacto = false }) {
   );
 }
 
-export default function GeneradorEntropia() {
-  return (
-    <section id="generador" className="relative max-w-7xl mx-auto px-5 md:px-10 py-20 md:py-28 grid lg:grid-cols-[0.85fr_1.15fr] gap-12 lg:gap-20 items-center">
-      <div>
-        <h2 className="titular">Una contraseña que nadie adivina, tú tampoco</h2>
-        <p className="mt-6 text-slate-300 max-w-md leading-relaxed">
-          Se genera con el generador criptográfico del sistema, sin sesgo y sin pasar por la red. La estimación de
-          fuerza bruta supone un billón de intentos por segundo.
-        </p>
-        <p className="mt-4 text-slate-400 max-w-md">Dentro de la bóveda, el mismo generador rellena las credenciales que guardes.</p>
-      </div>
-      <Generador />
-    </section>
-  );
-}
