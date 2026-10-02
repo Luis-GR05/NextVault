@@ -1,55 +1,93 @@
-import React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Key } from 'lucide-react';
+import { ArrowRight, KeyRound, Lock } from 'lucide-react';
+import { useSeguridad } from '../contexto/ContextoSeguridad';
+import { aHex, cifrar, generarClaveDatos } from '../lib/cripto';
 
-export default function Hero({ irASeccion }) {
+const te = new TextEncoder();
+const COLORES = ['text-neon-cyan', 'text-neon-violet', 'text-neon-pink', 'text-neon-green'];
+const FONDOS = ['bg-neon-cyan', 'bg-neon-violet', 'bg-neon-pink', 'bg-neon-green'];
+
+/** Demostración real: lo que escribes se cifra con AES-256-GCM y se parte en cuatro fragmentos al vuelo. */
+function CifradoEnVivo() {
+  const [texto, establecerTexto] = useState('La combinación de la caja es 48-15-16');
+  const [salida, establecerSalida] = useState({ iv: '', fragmentos: [] });
+  const clave = useRef(null);
+
+  useEffect(() => {
+    let vigente = true;
+    (async () => {
+      if (!clave.current) clave.current = await generarClaveDatos();
+      const { iv, cifrado } = await cifrar(clave.current, te.encode(texto));
+      if (!vigente) return;
+      const hex = aHex(cifrado);
+      const paso = Math.ceil(hex.length / 4 / 2) * 2;
+      establecerSalida({ iv: aHex(iv), fragmentos: [0, 1, 2, 3].map((i) => hex.slice(i * paso, (i + 1) * paso)).filter(Boolean) });
+    })();
+    return () => { vigente = false; };
+  }, [texto]);
+
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-8 md:px-16 lg:px-24 py-12 z-10">
-      <div className="absolute w-[clamp(250px,40vw,550px)] h-[clamp(250px,40vw,550px)] rounded-full bg-neon-violet/10 -top-[10%] -right-[10%] blur-[120px] pointer-events-none animate-float-orb z-0" />
-      <div className="absolute w-[clamp(200px,30vw,450px)] h-[clamp(200px,30vw,450px)] rounded-full bg-neon-cyan/10 -bottom-[10%] -left-[10%] blur-[120px] pointer-events-none animate-float-orb z-0 [animation-delay:-5s]" />
+    <div className="vidrio p-6 md:p-7 w-full shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+      <label htmlFor="demo-texto" className="etiqueta">Escribe algo. Se cifra aquí mismo, mientras tecleas.</label>
+      <input id="demo-texto" className="campo" value={texto} maxLength={80} onChange={(e) => establecerTexto(e.target.value)} autoComplete="off" spellCheck={false} />
 
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-        className="flex flex-col items-start gap-10 max-w-4xl"
-      >
-        <motion.span
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="inline-flex items-center gap-2.5 bg-elevated/80 border border-white/10 px-6 py-3 rounded-full text-xs font-bold text-neon-cyan tracking-wider uppercase backdrop-blur-md shadow-lg"
-        >
-          <span className="w-2.5 h-2.5 rounded-full bg-neon-cyan shadow-[0_0_10px_#06b6d4] animate-core-pulse" />
-          Red Principal Activa — Nodos Sincronizados
-        </motion.span>
+      <div className="mt-5 flex items-center gap-2 text-xs text-slate-400 font-semibold">
+        <Lock size={13} className="text-neon-cyan" /> AES-256-GCM
+        <span className="mono text-slate-500 truncate">iv {salida.iv}</span>
+      </div>
+      <p className="mono mt-2 text-[13px] leading-relaxed break-all min-h-[88px]" aria-label="Texto cifrado en hexadecimal">
+        {salida.fragmentos.map((f, i) => <span key={i} className={COLORES[i]}>{f}</span>)}
+      </p>
 
-        <h1 className="font-heading font-extrabold text-[clamp(3rem,7vw,5rem)] leading-[1.05] tracking-tight text-white mt-2">
-          Seguridad absoluta para tus{' '}
-          <span className="bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-pink bg-clip-text text-transparent">
-            activos digitales
-          </span>
+      <div className="mt-4 grid grid-cols-4 gap-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-white/8 bg-black/30 px-3 py-2.5">
+            <span className={`block w-full h-1 rounded-full ${FONDOS[i]} ${salida.fragmentos[i] ? 'opacity-90' : 'opacity-15'}`} />
+            <span className="block mt-2 text-[11px] font-semibold text-slate-300">Fragmento {i + 1}</span>
+            <span className="block mono text-[10px] text-slate-500">{salida.fragmentos[i] ? `${salida.fragmentos[i].length / 2} B` : 'vacío'}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-xs text-slate-500">Cada fragmento va a un nodo distinto. Por separado no dicen nada; sin tu clave, juntos tampoco.</p>
+    </div>
+  );
+}
+
+export default function Hero({ abrirAcceso, irAlPanel }) {
+  const { cuenta, abierta } = useSeguridad();
+  return (
+    <section id="inicio" className="relative max-w-7xl mx-auto px-5 md:px-10 pt-[120px] md:pt-[150px] pb-20 md:pb-28 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center min-h-[92vh]">
+      <div className="orbe w-[520px] h-[520px] bg-neon-violet/15 -top-20 -right-40" />
+      <div className="orbe w-[420px] h-[420px] bg-neon-cyan/10 bottom-0 -left-40 [animation-delay:-6s]" />
+
+      <motion.div initial={{ opacity: 0, y: 36 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} className="relative flex flex-col items-start gap-7">
+        <span className="inline-flex items-center gap-2.5 bg-elevated/80 border border-white/10 px-4 py-2 rounded-full text-xs font-semibold text-neon-cyan backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-neon-cyan pulso" />
+          Conocimiento cero: la clave nunca sale de tu navegador
+        </span>
+        <h1 className="font-heading font-extrabold text-white text-[clamp(2.8rem,7.4vw,5.6rem)] leading-[0.98] tracking-[-0.04em]">
+          Lo que guardas aquí <span className="degradado">solo lo abres tú</span>
         </h1>
-
-        <p className="text-[clamp(1.1rem,2vw,1.3rem)] text-slate-300 max-w-3xl font-medium leading-relaxed mt-2">
-          Bóvedas encriptadas descentralizadas y almacenamiento de conocimiento cero. Fragmenta, distribuye y protege tus archivos sensibles contra amenazas cuánticas con control total de tus llaves.
+        <p className="text-[clamp(1.05rem,1.6vw,1.25rem)] text-slate-300 max-w-xl leading-relaxed">
+          NextVault cifra tus archivos y contraseñas en el propio dispositivo, los parte en fragmentos y guarda cada
+          fragmento por duplicado en nodos distintos. Si un nodo cae, la bóveda se reconstruye sola.
         </p>
-
-        <div className="flex gap-6 flex-wrap mt-6">
-          <button
-            onClick={() => irASeccion(1)}
-            className="inline-flex items-center gap-2.5 px-9 py-4.5 rounded-full bg-gradient-to-r from-neon-violet to-neon-pink text-white font-extrabold text-sm shadow-[0_4px_25px_rgba(139,92,246,0.45)] hover:shadow-[0_8px_35px_rgba(139,92,246,0.65)] hover:-translate-y-0.5 transition-all duration-250 cursor-pointer border-none"
-          >
-            Explorar Bóvedas <ArrowRight size={16} />
-          </button>
-          <button
-            onClick={() => irASeccion(3)}
-            className="inline-flex items-center gap-2.5 px-9 py-4.5 rounded-full bg-transparent border-1.5 border-white/15 text-slate-200 font-extrabold text-sm hover:border-neon-cyan hover:bg-neon-cyan/5 transition-all duration-250 cursor-pointer"
-          >
-            Generar Llave <Key size={16} />
-          </button>
+        <div className="flex gap-4 flex-wrap">
+          {abierta ? (
+            <button onClick={irAlPanel} className="boton boton-pri">Abrir mi bóveda <ArrowRight size={16} /></button>
+          ) : cuenta ? (
+            <button onClick={() => abrirAcceso('desbloquear')} className="boton boton-pri">Desbloquear bóveda <Lock size={16} /></button>
+          ) : (
+            <button onClick={() => abrirAcceso('registro')} className="boton boton-pri">Crear mi bóveda <ArrowRight size={16} /></button>
+          )}
+          <a href="#generador" className="boton boton-sec">Generar una contraseña <KeyRound size={16} /></a>
         </div>
       </motion.div>
-    </div>
+
+      <motion.div initial={{ opacity: 0, y: 48, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 1, delay: 0.15, ease: [0.16, 1, 0.3, 1] }} className="relative">
+        <CifradoEnVivo />
+      </motion.div>
+    </section>
   );
 }

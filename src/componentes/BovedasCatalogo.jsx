@@ -1,177 +1,66 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Layers, Zap, ShieldAlert } from 'lucide-react';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Lock, ShieldCheck, Zap, Snowflake } from 'lucide-react';
+import { PERFILES } from '../lib/perfiles';
 
-const bovedasDatos = {
-  alfa: {
-    clave: 'alfa',
-    titulo: 'Vault Alpha v4',
-    subtitulo: 'Cifrado AES-256 de alto rendimiento',
-    descripcion: 'Nuestra bóveda estándar avanzada de alto rendimiento. Utiliza algoritmos de cifrado simétrico AES-256-GCM con autenticación integrada. Diseñada con derivación de llaves robusta mediante PBKDF2, redundancia distribuida multipunto y protección activa contra ataques de fuerza bruta mediante módulos de hardware seguro (HSM).',
-    icono: Lock,
-    estadisticas: [
-      { etiqueta: 'Robustez del Cifrado', valor: 95 },
-      { etiqueta: 'Aislamiento y Privacidad', valor: 99 },
-      { etiqueta: 'Velocidad de Recuperación', valor: 78 },
-      { etiqueta: 'Resistencia Cuántica', valor: 25 }
-    ]
-  },
-  obsidian: {
-    clave: 'obsidian',
-    titulo: 'Vault Obsidian Quantum',
-    subtitulo: 'Cifrado resistente a la computación cuántica',
-    descripcion: 'La solución de almacenamiento definitiva resistente al paso del tiempo. Integra criptografía post-cuántica (mecanismo de encapsulación de claves Kyber y firmas digitales Dilithium homologadas por el NIST), fragmentación (sharding) global de archivos cifrados y tolerancia a fallos bizantinos.',
-    icono: ShieldAlert,
-    estadisticas: [
-      { etiqueta: 'Robustez del Cifrado', valor: 99 },
-      { etiqueta: 'Aislamiento y Privacidad', valor: 99 },
-      { etiqueta: 'Velocidad de Recuperación', valor: 65 },
-      { etiqueta: 'Resistencia Cuántica', valor: 99 }
-    ]
-  },
-  gravity: {
-    clave: 'gravity',
-    titulo: 'Vault Zero-Gravity',
-    subtitulo: 'Sincronización instantánea de alta frecuencia',
-    descripcion: 'Almacenamiento en caliente (hot storage) para transacciones de alta velocidad y sincronización en tiempo real. Cuenta con distribución de carga adaptativa en red perimetral, recuperación instantánea de archivos de gran volumen y ancho de banda dedicado ilimitado.',
-    icono: Zap,
-    estadisticas: [
-      { etiqueta: 'Robustez del Cifrado', valor: 85 },
-      { etiqueta: 'Aislamiento y Privacidad', valor: 90 },
-      { etiqueta: 'Velocidad de Recuperación', valor: 99 },
-      { etiqueta: 'Resistencia Cuántica', valor: 60 }
-    ]
-  },
-  cold: {
-    clave: 'cold',
-    titulo: 'Vault Cold Armour',
-    subtitulo: 'Archivo en frío ultra-aislado desconectado',
-    descripcion: 'Blindaje físico absoluto para activos digitales pasivos críticos. Funciona en una infraestructura completamente aislada y desconectada de la red pública (Air-Gapped), requiriendo firmas criptográficas múltiples distribuidas (multi-sig) y autorización física por llave de hardware.',
-    icono: Layers,
-    estadisticas: [
-      { etiqueta: 'Robustez del Cifrado', valor: 99 },
-      { etiqueta: 'Aislamiento y Privacidad', valor: 99 },
-      { etiqueta: 'Velocidad de Recuperación', valor: 30 },
-      { etiqueta: 'Resistencia Cuántica', valor: 99 }
-    ]
-  }
-};
+const ICONOS = { alfa: Lock, obsidian: ShieldCheck, gravity: Zap, cold: Snowflake };
 
 export default function BovedasCatalogo() {
-  const [bovedaActiva, establecerBovedaActiva] = useState('alfa');
-  const contenedorRef = useRef(null);
-  const [posicionBrillo, establecerPosicionBrillo] = useState({ x: 0, y: 0 });
-
-  const manejarMovimientoRaton = (e) => {
-    if (!contenedorRef.current) return;
-    const rect = contenedorRef.current.getBoundingClientRect();
-    establecerPosicionBrillo({
-      x: e.clientX - rect.left - 125,
-      y: e.clientY - rect.top - 125
-    });
-  };
-
-  const boveda = bovedasDatos[bovedaActiva];
+  const [activa, establecerActiva] = useState('alfa');
+  const p = PERFILES[activa];
+  const Icono = ICONOS[activa];
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-8 md:px-16 lg:px-24 py-12 z-10 flex flex-col gap-14">
-      <div className="absolute w-[clamp(220px,35vw,480px)] h-[clamp(220px,35vw,480px)] rounded-full bg-neon-pink/5 top-[30%] left-[45%] blur-[120px] pointer-events-none animate-float-orb z-0 [animation-delay:-10s]" />
-
-      <div>
-        <span className="inline-block text-neon-cyan text-xs font-bold uppercase tracking-widest mb-2.5">
-          Arquitectura de Seguridad
-        </span>
-        <h2 className="font-heading text-white text-3xl md:text-5xl font-bold tracking-tight">
-          Contenedores de Bóveda Segura
-        </h2>
+    <section id="perfiles" className="relative max-w-7xl mx-auto px-5 md:px-10 py-20 md:py-28">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <h2 className="titular max-w-2xl">Cuatro bóvedas, cuatro maneras de repartir el riesgo</h2>
+        <p className="text-slate-400 max-w-sm">El perfil decide cuántos fragmentos se crean, cuántas copias se guardan y cuánto cuesta derivar tu clave.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-12 w-full items-start">
-        <div className="flex flex-col gap-5">
-          {Object.values(bovedasDatos).map((item) => {
-            const Icono = item.icono;
-            const estaActiva = bovedaActiva === item.clave;
-            return (
-              <button
-                key={item.clave}
-                onClick={() => establecerBovedaActiva(item.clave)}
-                className={`flex items-center gap-5 p-6 text-left rounded-2xl border transition-all duration-300 backdrop-blur-md cursor-pointer focus:outline-none ${
-                  estaActiva
-                    ? 'border-neon-violet bg-neon-violet/10 shadow-[0_0_25px_rgba(139,92,246,0.2)]'
-                    : 'border-white/5 bg-elevated/30 hover:border-white/12 hover:bg-elevated/50'
-                }`}
-              >
-                <span className={`p-3.5 rounded-xl transition-colors ${
-                  estaActiva ? 'bg-neon-violet/20 text-neon-cyan' : 'bg-white/5 text-slate-400'
-                }`}>
-                  <Icono size={24} />
-                </span>
-                <div className="flex flex-col gap-1">
-                  <span className="font-heading font-extrabold text-white text-base leading-tight">
-                    {item.titulo}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {item.subtitulo}
-                  </span>
+      <div role="tablist" aria-label="Perfiles de bóveda" className="flex gap-2 overflow-x-auto sin-barra pb-2">
+        {Object.values(PERFILES).map((x) => {
+          const I = ICONOS[x.clave];
+          return (
+            <button key={x.clave} role="tab" aria-selected={activa === x.clave} onClick={() => establecerActiva(x.clave)}
+              className={`flex items-center gap-2.5 px-5 py-3 rounded-full text-sm font-bold whitespace-nowrap border transition-all duration-300 ${
+                activa === x.clave ? 'bg-white text-obsidian border-white' : 'border-white/12 text-slate-300 hover:border-white/40'}`}>
+              <I size={16} /> {x.nombre}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={activa} role="tabpanel" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.35 }} className="vidrio mt-6 p-7 md:p-12 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16">
+          <div>
+            <span className="w-14 h-14 rounded-2xl bg-neon-violet/12 border border-neon-violet/30 grid place-items-center text-neon-cyan"><Icono size={26} /></span>
+            <h3 className="font-heading text-white text-4xl md:text-5xl font-extrabold tracking-tight mt-6">{p.nombre}</h3>
+            <p className="text-neon-cyan font-semibold mt-1">{p.lema}</p>
+            <p className="text-slate-300 mt-5 max-w-lg leading-relaxed">{p.descripcion}</p>
+            <dl className="mt-8 grid grid-cols-3 gap-4 max-w-md">
+              {[['Fragmentos', p.fragmentos], ['Copias', p.copias], ['PBKDF2', `${p.iteraciones / 1000}k`]].map(([k, v]) => (
+                <div key={k} className="border-l border-white/12 pl-4">
+                  <dd className="font-heading text-3xl font-extrabold text-white">{v}</dd>
+                  <dt className="text-xs text-slate-400 font-semibold mt-1">{k}</dt>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div
-          ref={contenedorRef}
-          onMouseMove={manejarMovimientoRaton}
-          className="relative bg-elevated/35 border border-white/8 rounded-3xl p-10 md:p-14 flex flex-col justify-between overflow-hidden backdrop-blur-xl shadow-2xl min-h-[500px]"
-        >
-          <div
-            className="absolute w-64 h-64 rounded-full blur-[90px] bg-neon-violet/12 pointer-events-none transition-all duration-300"
-            style={{
-              left: `${posicionBrillo.x}px`,
-              top: `${posicionBrillo.y}px`
-            }}
-          />
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={bovedaActiva}
-              initial={{ opacity: 0, x: 15 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -15 }}
-              transition={{ duration: 0.25 }}
-              className="relative z-10 flex flex-col h-full justify-between gap-12"
-            >
-              <div>
-                <h3 className="font-heading text-white text-2xl md:text-3xl font-extrabold mb-5">
-                  {boveda.titulo}
-                </h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-3xl font-medium">
-                  {boveda.descripcion}
-                </p>
+              ))}
+            </dl>
+          </div>
+          <div className="flex flex-col justify-center gap-6">
+            {p.medidas.map(([etiqueta, valor]) => (
+              <div key={etiqueta}>
+                <div className="flex justify-between text-sm font-semibold mb-2"><span className="text-slate-300">{etiqueta}</span><span className="mono text-slate-400">{valor}</span></div>
+                <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${valor}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-full rounded-full bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-pink" />
+                </div>
               </div>
-
-              <div className="flex flex-col gap-6">
-                {boveda.estadisticas.map((stat, idx) => (
-                  <div key={idx} className="flex flex-col gap-3">
-                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400">
-                      <span>{stat.etiqueta}</span>
-                      <span className="text-neon-cyan font-mono font-bold">{stat.valor}%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-black/40 border border-white/5 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.valor}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-neon-violet via-neon-cyan to-neon-green rounded-full"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
+            ))}
+            <p className="text-xs text-slate-500">Valores relativos entre perfiles, de 0 a 100.</p>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </section>
   );
 }

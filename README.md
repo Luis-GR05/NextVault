@@ -1,16 +1,33 @@
-# React + Vite
+# NextVault
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bóveda cifrada de conocimiento cero que funciona entera en el navegador.
 
-Currently, two official plugins are available:
+- **Cifrado real**: AES-256-GCM y PBKDF2-SHA-256 con la API WebCrypto. La contraseña maestra nunca se guarda; deriva la clave que envuelve la clave de datos.
+- **Fragmentación con redundancia**: cada archivo cifrado se parte en fragmentos y cada fragmento se copia en varios nodos. Se puede desconectar un nodo, vaciar su disco o corromper un fragmento; la auditoría lo detecta por SHA-256 y la reparación lo restaura desde una copia sana.
+- **Gestor de credenciales** cifrado con la misma clave, con generador de contraseñas y aviso de claves débiles o repetidas.
+- **Clave de recuperación**, cambio de contraseña, cambio de perfil, bloqueo automático por inactividad y borrado completo.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+En esta edición los «nodos» son almacenes independientes dentro de IndexedDB, en el propio navegador: no hay servidor. Borrar los datos del sitio borra la bóveda.
 
-## React Compiler
+## Desarrollo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # genera dist/
+npm run lint
+```
 
-## Expanding the ESLint configuration
+WebCrypto necesita un contexto seguro: `localhost` o HTTPS.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Estructura
+
+```
+src/
+  lib/cripto.js      primitivas: derivar, cifrar, envolver claves, generador
+  lib/almacen.js     IndexedDB (solo datos ya cifrados)
+  lib/boveda.js      guardar, recuperar, auditar, reparar, credenciales
+  lib/perfiles.js    perfiles Alpha, Obsidian, Zero-Gravity y Cold Armour
+  contexto/          sesión, claves en memoria y acciones
+  componentes/       portada y panel (archivos, credenciales, nodos, seguridad)
+```

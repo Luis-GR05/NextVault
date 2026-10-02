@@ -1,149 +1,135 @@
-import React, { useState } from 'react';
-import { useSeguridad } from '../contexto/ContextoSeguridad';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldAlert, X, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, X, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { useSeguridad } from '../contexto/ContextoSeguridad';
+import { entropiaDeTexto, nivelDeBits } from '../lib/cripto';
+import { PERFILES, configuracionInicial } from '../lib/perfiles';
 
-export default function AccesoSeguro({ alCerrar, alIniciarSesionExitoso }) {
-  const { iniciarSesion, registrarUsuario } = useSeguridad();
-  const [esLogin, establecerEsLogin] = useState(true);
-  const [correo, establecerCorreo] = useState('');
+const TITULOS = {
+  entrar: ['Abre tu bóveda', 'Escribe tu correo y tu contraseña maestra.'],
+  registro: ['Crea tu bóveda', 'La contraseña maestra cifra todo lo demás. No se puede recuperar si la pierdes.'],
+  desbloquear: ['Bóveda bloqueada', 'Vuelve a escribir tu contraseña maestra para descifrarla.'],
+  recuperar: ['Recupera el acceso', 'Usa tu clave de recuperación para fijar una contraseña nueva.'],
+};
+
+export default function AccesoSeguro({ modoInicial = 'entrar', config, alCerrar, alEntrar }) {
+  const { cuenta, registrar, entrar, entrarConRecuperacion, cerrarSesion } = useSeguridad();
+  const [modo, establecerModo] = useState(modoInicial);
+  const [correo, establecerCorreo] = useState(cuenta?.correo ?? '');
   const [contrasena, establecerContrasena] = useState('');
-  const [mostrarContrasena, establecerMostrarContrasena] = useState(false);
-  const [errorText, establecerErrorText] = useState('');
+  const [repetir, establecerRepetir] = useState('');
+  const [recuperacion, establecerRecuperacion] = useState('');
+  const [ver, establecerVer] = useState(false);
+  const [error, establecerError] = useState('');
+  const [ocupado, establecerOcupado] = useState(false);
+  const caja = useRef(null);
 
-  const procesarFormulario = (e) => {
-    e.preventDefault();
-    establecerErrorText('');
+  useEffect(() => {
+    const alTecla = (e) => { if (e.key === 'Escape') alCerrar(); };
+    document.addEventListener('keydown', alTecla);
+    document.body.style.overflow = 'hidden';
+    caja.current?.querySelector('input')?.focus();
+    return () => { document.removeEventListener('keydown', alTecla); document.body.style.overflow = ''; };
+  }, [alCerrar]);
 
-    if (!correo || !contrasena) {
-      establecerErrorText('Por favor, completa todos los campos.');
-      return;
+  const cambiar = (m) => { establecerModo(m); establecerError(''); establecerContrasena(''); establecerRepetir(''); };
+  const crea = modo === 'registro' || modo === 'recuperar';
+  const bits = entropiaDeTexto(contrasena);
+  const nivel = nivelDeBits(bits);
+  const cfg = config ?? configuracionInicial();
+
+  const enviar = async (e) => {
+    e.preventDefault(); establecerError('');
+    const c = modo === 'desbloquear' ? cuenta.correo : correo.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c)) return establecerError('Escribe un correo válido.');
+    if (crea) {
+      if (contrasena.length < 10) return establecerError('La contraseña maestra necesita al menos 10 caracteres.');
+      if (bits < 45) return establecerError('Es demasiado fácil de adivinar. Alárgala o mezcla tipos de carácter.');
+      if (contrasena !== repetir) return establecerError('Las dos contraseñas no coinciden.');
+    } else if (!contrasena) return establecerError('Escribe tu contraseña maestra.');
+    if (modo === 'recuperar' && recuperacion.replace(/[^a-z0-9]/gi, '').length < 32) return establecerError('La clave de recuperación tiene 32 caracteres.');
+
+    establecerOcupado(true);
+    try {
+      if (modo === 'registro') await registrar(c, contrasena, cfg);
+      else if (modo === 'recuperar') await entrarConRecuperacion(c, recuperacion, contrasena);
+      else await entrar(c, contrasena);
+      alEntrar();
+    } catch (ex) {
+      establecerError(ex.message || 'No se pudo abrir la bóveda.');
+      establecerOcupado(false);
     }
-
-    if (contrasena.length < 6) {
-      establecerErrorText('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    if (esLogin) {
-      iniciarSesion(correo, contrasena);
-    } else {
-      registrarUsuario(correo, contrasena);
-    }
-
-    alIniciarSesionExitoso();
   };
 
+  const [titulo, nota] = TITULOS[modo];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/85 backdrop-blur-md px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-lg bg-elevated/90 border border-white/10 rounded-3xl p-10 md:p-14 relative overflow-hidden backdrop-blur-2xl shadow-2xl flex flex-col gap-8"
-      >
-        <div className="absolute top-0 right-0 w-24 h-24 bg-neon-violet/15 rounded-full blur-2xl pointer-events-none" />
-        
-        <button
-          onClick={alCerrar}
-          className="absolute top-6 right-6 text-slate-400 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none transition-colors duration-200"
-          aria-label="Cerrar formulario"
-        >
-          <X size={22} />
-        </button>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-obsidian/85 backdrop-blur-md p-4 overflow-y-auto"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) alCerrar(); }}>
+      <motion.div ref={caja} role="dialog" aria-modal="true" aria-labelledby="acceso-titulo"
+        initial={{ opacity: 0, scale: 0.96, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 18 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="vidrio w-full max-w-md p-7 md:p-10 relative my-auto shadow-[0_40px_120px_rgba(0,0,0,0.8)]">
+        <button onClick={alCerrar} className="icono-btn absolute top-4 right-4" aria-label="Cerrar"><X size={20} /></button>
 
-        <div className="flex flex-col items-center gap-4 text-center">
-          <span className="w-14 h-14 rounded-2xl bg-neon-violet/10 border border-neon-violet/30 flex items-center justify-center text-neon-cyan shadow-md">
-            <ShieldAlert size={28} />
-          </span>
-          <h3 className="font-heading text-white text-2xl font-extrabold tracking-tight">
-            Acceso Autorizado NextVault
-          </h3>
-          <p className="text-xs text-slate-400 font-semibold max-w-xs leading-relaxed">
-            Establece una sesión cifrada de almacenamiento y protección descentralizada
+        <span className="w-12 h-12 rounded-2xl bg-neon-violet/12 border border-neon-violet/30 grid place-items-center text-neon-cyan"><ShieldCheck size={24} /></span>
+        <h2 id="acceso-titulo" className="font-heading text-white text-3xl font-extrabold tracking-tight mt-5">{titulo}</h2>
+        <p className="text-sm text-slate-400 mt-2">{nota}</p>
+
+        {modo === 'registro' && (
+          <p className="mt-4 text-xs text-slate-300 bg-white/5 border border-white/8 rounded-xl px-4 py-3">
+            Perfil <strong className="text-white">{PERFILES[cfg.perfil].nombre}</strong>: {cfg.nodos} nodos, {cfg.copias} {cfg.copias === 1 ? 'copia' : 'copias'} de cada fragmento.
           </p>
-        </div>
-
-        <div className="flex border-b border-white/5 w-full mt-2">
-          <button
-            onClick={() => {
-              establecerEsLogin(true);
-              establecerErrorText('');
-            }}
-            className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest bg-transparent border-none cursor-pointer focus:outline-none transition-colors duration-200 ${
-              esLogin ? 'text-neon-cyan border-b-2 border-neon-cyan' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            onClick={() => {
-              establecerEsLogin(false);
-              establecerErrorText('');
-            }}
-            className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest bg-transparent border-none cursor-pointer focus:outline-none transition-colors duration-200 ${
-              !esLogin ? 'text-neon-cyan border-b-2 border-neon-cyan' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Registrarse
-          </button>
-        </div>
-
-        {errorText && (
-          <div className="p-4 bg-neon-pink/10 border border-neon-pink/20 rounded-xl text-xs text-neon-pink font-bold text-center leading-normal">
-            {errorText}
-          </div>
         )}
 
-        <form onSubmit={procesarFormulario} className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2.5">
-            <label htmlFor="correoAcceso" className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Dirección de Correo
-            </label>
-            <input
-              type="email"
-              id="correoAcceso"
-              value={correo}
-              onChange={(e) => establecerCorreo(e.target.value)}
-              placeholder="cliente@nextvault.com"
-              required
-              className="bg-black/50 border border-white/10 rounded-2xl px-5 py-4 text-slate-200 text-sm font-semibold focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan focus:outline-none transition-all duration-200 w-full placeholder-slate-600"
-            />
-          </div>
+        <form onSubmit={enviar} className="flex flex-col gap-4 mt-6" noValidate>
+          {modo === 'desbloquear' ? (
+            <p className="mono text-sm text-neon-cyan bg-black/40 border border-white/8 rounded-xl px-4 py-3 truncate">{cuenta?.correo}</p>
+          ) : (
+            <div><label htmlFor="acc-correo" className="etiqueta">Correo</label>
+              <input id="acc-correo" type="email" autoComplete="username" className="campo" value={correo} onChange={(e) => establecerCorreo(e.target.value)} placeholder="tu@correo.com" /></div>
+          )}
 
-          <div className="flex flex-col gap-2.5">
-            <label htmlFor="contrasenaAcceso" className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Clave de Seguridad
-            </label>
+          {modo === 'recuperar' && (
+            <div><label htmlFor="acc-rec" className="etiqueta">Clave de recuperación</label>
+              <input id="acc-rec" className="campo mono uppercase" value={recuperacion} onChange={(e) => establecerRecuperacion(e.target.value)} placeholder="XXXX-XXXX-XXXX-…" autoComplete="off" spellCheck={false} /></div>
+          )}
+
+          <div>
+            <label htmlFor="acc-clave" className="etiqueta">{modo === 'recuperar' ? 'Nueva contraseña maestra' : 'Contraseña maestra'}</label>
             <div className="relative">
-              <input
-                type={mostrarContrasena ? 'text' : 'password'}
-                id="contrasenaAcceso"
-                value={contrasena}
-                onChange={(e) => establecerContrasena(e.target.value)}
-                placeholder="••••••••••••"
-                required
-                className="bg-black/50 border border-white/10 rounded-2xl pl-5 pr-12 py-4 text-slate-200 text-sm font-semibold focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan focus:outline-none transition-all duration-200 w-full placeholder-slate-600"
-              />
-              <button
-                type="button"
-                onClick={() => establecerMostrarContrasena(!mostrarContrasena)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white bg-transparent border-none cursor-pointer focus:outline-none transition-colors duration-200"
-              >
-                {mostrarContrasena ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              <input id="acc-clave" type={ver ? 'text' : 'password'} autoComplete={crea ? 'new-password' : 'current-password'} className="campo pr-12" value={contrasena} onChange={(e) => establecerContrasena(e.target.value)} />
+              <button type="button" onClick={() => establecerVer(!ver)} className="icono-btn absolute right-1.5 top-1/2 -translate-y-1/2" aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{ver ? <EyeOff size={17} /> : <Eye size={17} />}</button>
             </div>
+            {crea && contrasena && (
+              <div className="mt-2.5 flex items-center gap-3">
+                <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className={`h-full rounded-full transition-all duration-300 ${nivel.color}`} style={{ width: `${Math.min(100, bits / 1.2)}%` }} /></div>
+                <span className="text-xs font-semibold text-slate-300">{nivel.texto}</span>
+              </div>
+            )}
           </div>
 
-          <button
-            type="submit"
-            className="w-full mt-4 py-4 rounded-2xl bg-gradient-to-r from-neon-violet to-neon-pink text-white text-sm font-extrabold shadow-[0_4px_20px_rgba(139,92,246,0.3)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.5)] transition-all duration-300 cursor-pointer border-none"
-          >
-            {esLogin ? 'Iniciar Conexión Segura' : 'Crear Cuenta Descentralizada'}
+          {crea && (
+            <div><label htmlFor="acc-rep" className="etiqueta">Repítela</label>
+              <input id="acc-rep" type={ver ? 'text' : 'password'} autoComplete="new-password" className="campo" value={repetir} onChange={(e) => establecerRepetir(e.target.value)} /></div>
+          )}
+
+          {error && <p className="error-texto" role="alert">{error}</p>}
+
+          <button type="submit" disabled={ocupado} className="boton boton-pri w-full mt-1">
+            {ocupado ? <><LoaderCircle size={16} className="gira" /> Derivando la clave…</> : modo === 'registro' ? 'Crear bóveda' : modo === 'recuperar' ? 'Fijar contraseña y abrir' : 'Abrir bóveda'}
           </button>
         </form>
+
+        <div className="mt-6 flex flex-col gap-2 text-sm text-slate-400">
+          {modo === 'entrar' && <p>¿Primera vez? <button onClick={() => cambiar('registro')} className="text-neon-cyan font-semibold hover:underline">Crea una bóveda</button></p>}
+          {modo === 'registro' && <p>¿Ya tienes una? <button onClick={() => cambiar('entrar')} className="text-neon-cyan font-semibold hover:underline">Entra</button></p>}
+          {(modo === 'entrar' || modo === 'desbloquear') && <p><button onClick={() => cambiar('recuperar')} className="text-slate-300 font-semibold hover:underline">He olvidado mi contraseña</button></p>}
+          {modo === 'recuperar' && <p><button onClick={() => cambiar(cuenta ? 'desbloquear' : 'entrar')} className="text-neon-cyan font-semibold hover:underline">Volver</button></p>}
+          {modo === 'desbloquear' && <p><button onClick={() => { cerrarSesion(); cambiar('entrar'); establecerCorreo(''); }} className="text-slate-300 font-semibold hover:underline">Usar otra bóveda</button></p>}
+        </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

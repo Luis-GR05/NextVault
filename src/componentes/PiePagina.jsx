@@ -1,33 +1,19 @@
-import React from 'react';
-
 export default function PiePagina() {
   return (
-    <footer className="w-full py-6 bg-obsidian/90 border-t border-white/5 z-10 flex flex-col md:flex-row items-center justify-between px-6 md:px-12 gap-4 text-xs text-slate-500 font-medium">
-      <p>
-        &copy; 2026 NextVault Systems Inc. Todas las bóvedas están descentralizadas y los metadatos cifrados por conocimiento cero.
-      </p>
-      <ul className="flex gap-6 list-none">
-        <li>
-          <a href="#" className="hover:text-neon-cyan transition-colors duration-200 no-underline">
-            Especificaciones
-          </a>
-        </li>
-        <li>
-          <a href="#" className="hover:text-neon-cyan transition-colors duration-200 no-underline">
-            Whitepaper
-          </a>
-        </li>
-        <li>
-          <a href="#" className="hover:text-neon-cyan transition-colors duration-200 no-underline">
-            Soporte de Red
-          </a>
-        </li>
-        <li>
-          <a href="#" className="hover:text-neon-cyan transition-colors duration-200 no-underline">
-            Auditorías HSM
-          </a>
-        </li>
-      </ul>
+    <footer className="relative z-10 border-t border-white/5 bg-obsidian/70 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-5 md:px-10 py-10 flex flex-col md:flex-row gap-6 md:items-end justify-between text-sm text-slate-400">
+        <div className="max-w-xl">
+          <p className="font-heading text-white text-lg font-bold mb-2">NextVault</p>
+          <p>
+            Cifrado AES-256-GCM y derivación PBKDF2-SHA-256 con la API WebCrypto del navegador. En esta edición los nodos
+            son almacenes independientes dentro de IndexedDB: nada se envía a ningún servidor y borrar los datos del
+            navegador borra la bóveda.
+          </p>
+        </div>
+        <p className="text-xs text-slate-500 md:text-right">
+          © 2026 NextVault. Proyecto de demostración.<br />Fotografías de Unsplash.
+        </p>
+      </div>
     </footer>
   );
 }
