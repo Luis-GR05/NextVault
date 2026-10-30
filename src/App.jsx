@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useSeguridad } from './contexto/ContextoSeguridad';
 import { usePantallas } from './hooks/usePantallas';
 import Cabecera from './ui/Cabecera';
-import Dial from './ui/Dial';
+import DialVideo from './ui/DialVideo';
 import Portada from './vistas/Portada';
 import Bovedas from './vistas/Bovedas';
 import MonitorRed from './vistas/MonitorRed';
@@ -49,7 +49,7 @@ export default function App() {
       <main id="contenido-principal">
         {mostrarPanel ? <Panel /> : (
           <div className="pantallas" ref={contenedor}>
-            <Dial indice={indice} />
+            <DialVideo indice={indice} total={SECCIONES.length} />
             {vistas.map((v, i) => (
               <section key={SECCIONES[i]} className={clase(i)} aria-label={SECCIONES[i]} aria-hidden={i !== indice} inert={i !== indice}>{v}</section>
             ))}

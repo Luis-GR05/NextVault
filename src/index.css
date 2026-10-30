@@ -69,6 +69,10 @@ button:disabled { cursor: not-allowed; }
   .interruptor[aria-checked='true'] { background: var(--color-ok); }
   .interruptor[aria-checked='true']::after { transform: translateX(18px); background: var(--color-carbon); }
 
+  /* Dial en vídeo: se funde con el fondo por la izquierda para que no se note el borde */
+  .dial-video { opacity: 0.85; mix-blend-mode: lighten; -webkit-mask-image: linear-gradient(to right, transparent, #000 22%); mask-image: linear-gradient(to right, transparent, #000 22%); transition: opacity 1s var(--suave); }
+  .dial-video.tenue { opacity: 0.35; }
+
   /* Pantallas completas */
   .pantallas { position: fixed; inset: 0; overflow: hidden; }
   .pantalla { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; display: flex; padding: 96px clamp(20px, 5vw, 88px) 84px; opacity: 0; visibility: hidden; transform: translateY(48px); transition: opacity 0.55s ease, transform 0.8s var(--suave), visibility 0s 0.8s; }
